@@ -4,9 +4,7 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
@@ -25,8 +23,6 @@ import frc.robot.subsystems.DriveSubsystem;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   // TODO: Initialize your DriveSubsystem here...
-  private final DriveSubsystem m_drivetrain = new DriveSubsystem();
-  private final Joystick driverController = new Joystick(0);
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
@@ -38,18 +34,6 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
-
-            // Default command: run this during teleop
-        m_drivetrain.setDefaultCommand(
-            new RunCommand(() -> 
-                m_drivetrain.arcadeDrive(
-                    -driverController.getRawAxis(1), // forward/backward
-                    driverController.getRawAxis(0)  // turning
-                ), 
-                m_drivetrain
-            )
-        );
-
   }
 
   /**

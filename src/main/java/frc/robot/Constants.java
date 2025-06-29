@@ -23,9 +23,5 @@ public final class Constants {
 
   // TODO: Insert DriveConstants here...
   public static class DriveConstants {
-
-    
   }
-
-
 }
