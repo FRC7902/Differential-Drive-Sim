@@ -12,12 +12,15 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
@@ -43,9 +46,24 @@ public class DriveSubsystem extends SubsystemBase {
     StructPublisher<Pose2d> m_publisher;
 
     // TODO: Insert your drive motors and differential drive here...
+ 
+    
+    
+    SparkMax m_leftLeaderMotor;
+    SparkMax m_rightLeaderMotor;
+
+    private final DifferentialDrive drive;
+    SparkMaxConfig m_leftLeaderMotorConfig;
+    SparkMaxConfig m_rightLeaderMotorConfig;
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
+
+        drive = new DifferentialDrive(m_leftLeaderMotor,m_rightLeaderMotor);
+
+        m_leftMotorSim = new SparkMaxSim(m_leftLeaderMotor, DCMotor.getNEO(2));
+
+        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2)); 
 
         m_driveSim = DifferentialDrivetrainSim.createKitbotSim(
                 KitbotMotor.kDoubleNEOPerSide,
@@ -60,13 +78,30 @@ public class DriveSubsystem extends SubsystemBase {
 
         m_publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
 
-        // TODO: Instantiate motors & differential drive, then configure motors here...
+        // TODO: Instantiate motors & differential drive, then configure motors here... 
 
-        m_leftMotorSim = new SparkMaxSim(m_leftLeaderMotor, DCMotor.getNEO(2));
-        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2));
-    }
+        //oh shoot we forgot to instantiate m_leftLeaderMotor and m_rightLeaderMotor and maybe even the DCMotor.getNeo shit?
+        //oh yeah it says ur supposed to configure motors so u do need config 
+
+        m_leftLeaderMotor=new SparkMax(2,MotorType.kBrushless);
+        m_rightLeaderMotor=new SparkMax(3,MotorType.kBrushless);
+        m_leftLeaderMotorConfig= new SparkMaxConfig();
+        m_rightLeaderMotorConfig= new SparkMaxConfig();
+        configure();}
+
+        private void configure() {
+
+        m_leftLeaderMotorConfig.smartCurrentLimit(9);
+        m_leftLeaderMotor.configure(m_leftLeaderMotorConfig, ResetMode.kResetSafeParameters,PersistMode.kPersistParameters);
+
+            }  //somethings wrong with the bracket
+
 
     // TODO: Insert your arcadeDrive method here...
+
+    public void arcadeDrive(double fwd, double rot) {
+        drive.arcadeDrive(fwd, rot);
+    }
 
     @Override
     public void periodic() {
@@ -101,5 +136,7 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rightMotorSim.getRelativeEncoderSim().getPosition());
 
         m_publisher.set(m_odometry.getPoseMeters());
-    }
+    
+
+}
 }
