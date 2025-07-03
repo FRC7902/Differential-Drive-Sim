@@ -1,7 +1,6 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
 import com.revrobotics.sim.SparkMaxSim;
@@ -19,8 +18,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
@@ -28,115 +26,128 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
+    // Constants
     private final double kNEOMaxRPM = 5676;
-    private final double kWheelDiameterInches = 6;
+    private final double kWheelDiameterInches = 6.0;
     private final double kDrivetrainGearRatio = 10.71;
 
-    private final DifferentialDrivetrainSim m_driveSim;
+    // Hardware
+    private final SparkMax m_leftLeaderMotor;
+    private final SparkMax m_rightLeaderMotor;
+    private final DifferentialDrive drive;
 
-    private final DifferentialDriveOdometry m_odometry;
-
+    // Simulation
     private final SparkMaxSim m_leftMotorSim;
     private final SparkMaxSim m_rightMotorSim;
-
-    StructPublisher<Pose2d> m_publisher;
-
-    // TODO: Insert your drive motors and differential drive here...
- 
-    
-    
-    SparkMax m_leftLeaderMotor;
-    SparkMax m_rightLeaderMotor;
-
-    private final DifferentialDrive drive;
-    SparkMaxConfig m_leftLeaderMotorConfig;
-    SparkMaxConfig m_rightLeaderMotorConfig;
+    private final DifferentialDrivetrainSim m_driveSim;
+    private final DifferentialDriveOdometry m_odometry;
+    private final StructPublisher<Pose2d> m_publisher;
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
+        // Instantiate motors
+        m_leftLeaderMotor = new SparkMax(2, MotorType.kBrushless);
+        m_rightLeaderMotor = new SparkMax(3, MotorType.kBrushless);
 
-        drive = new DifferentialDrive(m_leftLeaderMotor,m_rightLeaderMotor);
+        // Drive helper
+        drive = new DifferentialDrive(m_leftLeaderMotor, m_rightLeaderMotor);
 
+        // Configure motors
+        configure();
+
+        // Simulation motor models
         m_leftMotorSim = new SparkMaxSim(m_leftLeaderMotor, DCMotor.getNEO(2));
+        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2));
 
-        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2)); 
-
+        // Simulate robot drive (kitbot preset)
         m_driveSim = DifferentialDrivetrainSim.createKitbotSim(
                 KitbotMotor.kDoubleNEOPerSide,
                 KitbotGearing.k10p71,
                 KitbotWheelSize.kSixInch,
-                null);
+                null // Optional measurement noise
+        );
 
+        // Odometry (for tracking robot position)
         m_odometry = new DifferentialDriveOdometry(
                 new Rotation2d(),
                 m_driveSim.getLeftPositionMeters(),
-                m_driveSim.getRightPositionMeters());
+                m_driveSim.getRightPositionMeters()
+        );
 
-        m_publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
+        // NetworkTables pose publisher (for Shuffleboard/Sim GUI)
+        m_publisher = NetworkTableInstance.getDefault()
+                .getStructTopic("MyPose", Pose2d.struct)
+                .publish();
+    }
 
-        // TODO: Instantiate motors & differential drive, then configure motors here... 
-
-        //oh shoot we forgot to instantiate m_leftLeaderMotor and m_rightLeaderMotor and maybe even the DCMotor.getNeo shit?
-        //oh yeah it says ur supposed to configure motors so u do need config 
-
-        m_leftLeaderMotor=new SparkMax(2,MotorType.kBrushless);
-        m_rightLeaderMotor=new SparkMax(3,MotorType.kBrushless);
-        m_leftLeaderMotorConfig= new SparkMaxConfig();
-        m_rightLeaderMotorConfig= new SparkMaxConfig();
-        configure();}
-
-        private void configure() {
-
-        m_leftLeaderMotorConfig.smartCurrentLimit(9);
-        m_leftLeaderMotor.configure(m_leftLeaderMotorConfig, ResetMode.kResetSafeParameters,PersistMode.kPersistParameters);
-
-            }  //somethings wrong with the bracket
-
-
-    // TODO: Insert your arcadeDrive method here...
-
+    /** Arcade drive control method */
     public void arcadeDrive(double fwd, double rot) {
         drive.arcadeDrive(fwd, rot);
     }
 
+    /** Motor configuration */
+    private void configure() {
+        SparkMaxConfig m_leftLeaderMotorConfig = new SparkMaxConfig();
+        SparkMaxConfig m_rightLeaderMotorConfig = new SparkMaxConfig();
+
+        m_leftLeaderMotorConfig.smartCurrentLimit(9);
+        m_rightLeaderMotorConfig.smartCurrentLimit(9);
+
+        m_leftLeaderMotor.configure(
+                m_leftLeaderMotorConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters
+        );
+        m_rightLeaderMotor.configure(
+                m_rightLeaderMotorConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters
+        );
+    }
+
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
+        // This method is called once per scheduler run (on real robot)
     }
 
     @Override
     public void simulationPeriodic() {
+        // Step the physics sim forward by 20ms
         m_driveSim.update(0.02);
 
-        m_leftMotorSim.iterate(
-                (((kNEOMaxRPM * m_leftLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI
-                        * kWheelDiameterInches) / 60,
-                RoboRioSim.getVInVoltage(), 0.02);
-        m_rightMotorSim.iterate(
-                (((kNEOMaxRPM * m_rightLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI
-                        * kWheelDiameterInches) / 60,
-                RoboRioSim.getVInVoltage(), 0.02);
+        // Convert motor percent output to wheel speed (m/s)
+        double leftSpeedMps = (((kNEOMaxRPM * m_leftLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI * kWheelDiameterInches) / 60.0;
+        double rightSpeedMps = (((kNEOMaxRPM * m_rightLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI * kWheelDiameterInches) / 60.0;
 
-        m_leftMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
-        m_rightMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+        double vin = RoboRioSim.getVInVoltage();
+
+        m_leftMotorSim.iterate(leftSpeedMps, vin, 0.02);
+        m_rightMotorSim.iterate(rightSpeedMps, vin, 0.02);
+
+        // Simulate applied voltage and bus voltage
+        m_leftMotorSim.setBusVoltage(vin);
+        m_rightMotorSim.setBusVoltage(vin);
 
         m_leftMotorSim.setAppliedOutput(m_leftLeaderMotor.getAppliedOutput());
         m_rightMotorSim.setAppliedOutput(m_rightLeaderMotor.getAppliedOutput());
 
-        m_driveSim.setInputs(m_leftMotorSim.getAppliedOutput() * m_leftMotorSim.getBusVoltage(),
-                m_rightMotorSim.getAppliedOutput() * m_rightMotorSim.getBusVoltage());
+        // Set inputs into drivetrain sim
+        m_driveSim.setInputs(
+                m_leftMotorSim.getAppliedOutput() * m_leftMotorSim.getBusVoltage(),
+                m_rightMotorSim.getAppliedOutput() * m_rightMotorSim.getBusVoltage()
+        );
 
+        // Update odometry with simulated encoder positions and heading
         m_odometry.update(
                 m_driveSim.getHeading(),
-                m_leftMotorSim.getRelativeEncoderSim().getPosition(),
-                m_rightMotorSim.getRelativeEncoderSim().getPosition());
+                m_driveSim.getLeftPositionMeters(),
+                m_driveSim.getRightPositionMeters()
+        );
 
+        // Publish pose to NetworkTables
         m_publisher.set(m_odometry.getPoseMeters());
-    
-
-}
+    }
 }
