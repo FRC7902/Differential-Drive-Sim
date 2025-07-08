@@ -4,11 +4,13 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
+import org.littletonrobotics.junction.Logger;
 /**
  * The methods in this class are called automatically corresponding to each
  * mode, as described in
@@ -121,4 +123,19 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
   }
+  //@Override
+  public void robotInit() {
+      ///Logger.start(); 
+      //DataLogManager.start();
+     // SmartDashboard.putString("Robot", "Initialized");
+      //Logger.recordMetadata("ProjectName", "MyRobot");
+      //Logger.recordMetadata("RuntimeType", "Simulation");
+
+    //  DataLogManager.start();
+    //  SmartDashboard.putString("Robot", "Initialized");
+    //  DataLogManager.recordMetadata("ProjectName", "MyRobot");
+    //  Logger.recordMetadata("RuntimeType", "Simulation");
+  }
+  
+
 }

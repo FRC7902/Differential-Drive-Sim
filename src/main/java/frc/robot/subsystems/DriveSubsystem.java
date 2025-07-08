@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -44,7 +45,7 @@ public class DriveSubsystem extends SubsystemBase {
     private final SparkMaxSim m_rightMotorSim;
     private final DifferentialDrivetrainSim m_driveSim;
     private final DifferentialDriveOdometry m_odometry;
-    private final StructPublisher<Pose2d> m_publisher;
+    StructPublisher<Pose2d> m_publisher;
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
@@ -58,6 +59,7 @@ public class DriveSubsystem extends SubsystemBase {
         // Configure motors
         configure();
 
+        
         // Simulation motor models
         m_leftMotorSim = new SparkMaxSim(m_leftLeaderMotor, DCMotor.getNEO(2));
         m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2));
@@ -67,7 +69,7 @@ public class DriveSubsystem extends SubsystemBase {
                 KitbotMotor.kDoubleNEOPerSide,
                 KitbotGearing.k10p71,
                 KitbotWheelSize.kSixInch,
-                null // Optional measurement noise
+                null
         );
 
         // Odometry (for tracking robot position)
@@ -78,10 +80,38 @@ public class DriveSubsystem extends SubsystemBase {
         );
 
         // NetworkTables pose publisher (for Shuffleboard/Sim GUI)
-        m_publisher = NetworkTableInstance.getDefault()
-                .getStructTopic("MyPose", Pose2d.struct)
-                .publish();
-    }
+  //      m_publisher = NetworkTableInstance.getDefault()
+ //               .getStructTopic("MyPose", Pose2d.struct)
+ //               .publish();
+  //  }
+
+  m_leftMotorSim.iterate(
+
+  (((kNEOMaxRPM * m_leftLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI
+
+          * kWheelDiameterInches) / 60,
+
+  RoboRioSim.getVInVoltage(), 0.02);
+
+  m_leftMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+
+  m_rightMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+
+
+  m_leftMotorSim.getRelativeEncoderSim().getPosition();
+
+m_rightMotorSim.getRelativeEncoderSim().getPosition();
+
+
+m_rightMotorSim.iterate(
+
+  (((kNEOMaxRPM * m_rightLeaderMotor.get()) / kDrivetrainGearRatio) * Math.PI
+
+          * kWheelDiameterInches) / 60,
+
+  RoboRioSim.getVInVoltage(), 0.02);
+
+    m_publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();}
 
     /** Arcade drive control method */
     public void arcadeDrive(double fwd, double rot) {
