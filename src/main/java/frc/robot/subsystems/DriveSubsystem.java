@@ -5,12 +5,8 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.sim.SparkMaxSim;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -25,7 +21,6 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -37,21 +32,30 @@ public class DriveSubsystem extends SubsystemBase {
 
     private final DifferentialDriveOdometry m_odometry;
 
+    private final DifferentialDrive m_drive;
+
+    private final SparkMax m_leftLeaderMotor;
+    private final SparkMax m_rightLeaderMotor;
+
     private final SparkMaxSim m_leftMotorSim;
     private final SparkMaxSim m_rightMotorSim;
 
-    StructPublisher<Pose2d> m_publisher;
-
-    // TODO: Insert your drive motors and differential drive here...
+    private final StructPublisher<Pose2d> m_publisher;
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
+
+
+        m_leftLeaderMotor = new SparkMax(1, MotorType.kBrushless);
+        m_rightLeaderMotor = new SparkMax(2, MotorType.kBrushless);
 
         m_driveSim = DifferentialDrivetrainSim.createKitbotSim(
                 KitbotMotor.kDoubleNEOPerSide,
                 KitbotGearing.k10p71,
                 KitbotWheelSize.kSixInch,
                 null);
+
+        m_drive = new DifferentialDrive(m_leftLeaderMotor, m_rightLeaderMotor);
 
         m_odometry = new DifferentialDriveOdometry(
                 new Rotation2d(),
@@ -60,13 +64,23 @@ public class DriveSubsystem extends SubsystemBase {
 
         m_publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
 
-        // TODO: Instantiate motors & differential drive, then configure motors here...
-
         m_leftMotorSim = new SparkMaxSim(m_leftLeaderMotor, DCMotor.getNEO(2));
-        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(2));
+        m_rightMotorSim = new SparkMaxSim(m_rightLeaderMotor, DCMotor.getNEO(3));
+
     }
 
-    // TODO: Insert your arcadeDrive method here...
+
+    public void drive(double drive, double heading) {
+        m_drive.arcadeDrive(drive, heading);
+    }
+
+    public Pose2d getPose() {
+        return m_odometry.getPoseMeters();
+    }
+
+    public double getCurrentAmpsDraw() {
+        return m_driveSim.getCurrentDrawAmps();
+    }
 
     @Override
     public void periodic() {
